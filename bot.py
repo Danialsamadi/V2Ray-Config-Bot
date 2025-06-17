@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import re  # Add this import at the top of the file
 import requests  # Add this import at the top of the file
 import asyncio  # Add this import at the top of the file
+import random  # Add this import at the top of the file
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,6 +28,27 @@ logging.basicConfig(
     level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO'))
 )
 logger = logging.getLogger(__name__)
+
+def fetch_mtproto_data():
+    """Fetch data from the MTProto JSON source."""
+    url = "https://raw.githubusercontent.com/hookzof/socks5_list/master/tg/mtproto.json"
+    try:
+        response = requests.get(url, timeout=REQUEST_TIMEOUT)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        logger.error(f"Failed to fetch MTProto data: {e}")
+        return []
+
+def remove_duplicate_proxies(proxies):
+    """Remove duplicate proxies from the list."""
+    seen = set()
+    unique_proxies = []
+    for proxy in proxies:
+        if proxy not in seen:
+            seen.add(proxy)
+            unique_proxies.append(proxy)
+    return unique_proxies
 
 async def send_proxies_to_channel():
     """Send the latest proxies to the specified Telegram channel."""
@@ -58,8 +80,17 @@ async def send_proxies_to_channel():
         # Extract all proxy links using regex
         proxy_links = re.findall(r'(tg://proxy\?[^\s]+)', content)
         
-        # Calculate total proxies once
-        total_proxies = len(proxy_links)
+        # Fetch MTProto data
+        mtproto_data = fetch_mtproto_data()
+        
+        # Process MTProto data
+        mtproto_links = [f"tg://proxy?server={item['host']}&port={item['port']}&secret={item['secret']}" for item in mtproto_data]
+        
+        # Combine with existing proxy links
+        proxy_links.extend(mtproto_links)
+        
+        # Remove duplicate proxies
+        proxy_links = remove_duplicate_proxies(proxy_links)
         
         # Remove duplicate links while preserving order and first occurrence
         seen_links = set()
@@ -76,8 +107,14 @@ async def send_proxies_to_channel():
         # Update proxy_links with unique links
         proxy_links = unique_proxy_links
         
-        # Limit the number of proxy links
-        proxy_links = proxy_links[:MAX_PROXIES]
+        # Calculate half of the proxies
+        half_proxies_count = len(proxy_links) // 2
+        
+        # Limit the proxies to half
+        proxy_links = proxy_links[:half_proxies_count]
+        
+        # Update total_proxies to reflect the new count
+        total_proxies = len(proxy_links)
         
         # Prepare the first message with summary
         first_message = f"🔄 *Latest Proxies Update: {datetime_str}*\n\n"
@@ -112,8 +149,11 @@ async def send_proxies_to_channel():
                     return False
                 await asyncio.sleep(2)  # Wait before retrying
         
+        # Define a list of emojis
+        emojis = ['🌁', '🌃', '🏙️', '🌄', '🌅', '🌇', '🏞️']
+        
         # Prepare and send proxy links in batches
-        batch_size = 10  # Number of proxies per message
+        batch_size = 10
         total_batches = (len(proxy_links) + batch_size - 1) // batch_size
         
         for batch in range(total_batches):
@@ -123,11 +163,18 @@ async def send_proxies_to_channel():
             batch_links = proxy_links[start_idx:end_idx]
             
             # Prepare batch message
-            current_message = f"*Proxy Links ({batch + 1}/{total_batches}, Total: {total_proxies}):*\n"
+            current_message = f"*Proxy Links ( Page : {batch + 1}):*\n"
             for i, link in enumerate(batch_links, start=1):
+                # Calculate global index
+                global_index = start_idx + i
+                # Select a random emoji
+                emoji = random.choice(emojis)
                 current_message += f"---------------\n"
-                current_message += f"[Proxy {i}]({link})\n"
+                current_message += f"[Proxy {global_index}  {emoji}]({link})\n"
                 current_message += f"---------------\n"
+            
+            # Append the specified text to the end of the message
+            current_message += "\n@proxyroohejangali"
             
             # Send batch message with retry mechanism
             for attempt in range(max_retries):
@@ -147,10 +194,11 @@ async def send_proxies_to_channel():
                     if attempt == max_retries - 1:
                         logger.error(f"Failed to send batch {batch + 1} after all retries")
                         return False
-                    await asyncio.sleep(2)  # Wait before retrying
+                    # Implement exponential backoff
+                    await asyncio.sleep(2 ** attempt * 2)  # Wait before retrying
             
-            # Add a small delay between batches to prevent rate limiting
-            await asyncio.sleep(1)
+            # Add a longer delay between batches to prevent rate limiting
+            await asyncio.sleep(5)  # Increase delay to 5 seconds
         
         logger.info(f"Successfully sent proxies to channel {CHANNEL_ID}")
         return True
