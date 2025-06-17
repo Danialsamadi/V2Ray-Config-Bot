@@ -55,6 +55,9 @@ async def send_proxies_to_channel():
         # Extract all proxy links using regex
         proxy_links = re.findall(r'(tg://proxy\?[^\s]+)', content)
         
+        # Calculate total proxies once
+        total_proxies = len(proxy_links)
+        
         # Remove duplicate links while preserving order and first occurrence
         seen_links = set()
         unique_proxy_links = []
@@ -75,7 +78,7 @@ async def send_proxies_to_channel():
         
         # Prepare the first message with summary
         first_message = f"🔄 *Latest Proxies Update: {datetime_str}*\n\n"
-        first_message += f"*Total Proxies in Source:* {len(re.findall(r'(tg://proxy\?[^\s]+)', content))}\n"
+        first_message += f"*Total Proxies in Source:* {total_proxies}\n"
         first_message += f"*Proxies Displayed:* {len(proxy_links)}\n\n"
         
         # Add subscription links to the first message
@@ -109,25 +112,19 @@ async def send_proxies_to_channel():
             batch_links = proxy_links[start_idx:end_idx]
             
             # Prepare batch message
-            current_message = f"*Proxy Links ({batch + 1}/{total_batches}):*\n"
+            current_message = f"*Proxy Links ({batch + 1}/{total_batches}, Total: {total_proxies}):*\n"
             for i, link in enumerate(batch_links, start=1):
                 current_message += f"---------------\n"
                 current_message += f"[Proxy {i}]({link})\n"
                 current_message += f"---------------\n"
             
-            # Send batch message with error handling and delay
-            try:
-                await bot.send_message(
-                    chat_id=CHANNEL_ID,
-                    text=current_message,
-                    parse_mode='Markdown',
-                    disable_web_page_preview=True
-                )
-                await asyncio.sleep(1)  # Add a small delay between messages
-            except Exception as e:
-                logger.error(f"Failed to send batch {batch + 1}: {e}")
-                # Continue with next batch if one fails
-                continue
+            # Send batch message
+            await bot.send_message(
+                chat_id=CHANNEL_ID,
+                text=current_message,
+                parse_mode='Markdown',
+                disable_web_page_preview=True
+            )
         
         # Send comprehensive subscription links in a final message
         subscription_message = "*Comprehensive Proxy Resources:*\n\n"

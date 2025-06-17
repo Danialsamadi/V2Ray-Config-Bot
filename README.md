@@ -78,4 +78,36 @@ For GitHub Actions, set the following secrets in your repository settings:
 
 ### Security Notes
 - Never commit your `.env` file to version control
-- Keep your bot token and channel ID confidential 
+- Keep your bot token and channel ID confidential
+
+## Running as GitHub Action
+
+### Setup Steps
+1. Fork this repository
+2. Create a Telegram bot with [BotFather](https://t.me/botfather)
+3. Add bot to your target Telegram channel with admin rights
+
+### GitHub Repository Configuration
+1. Go to repository Settings > Secrets and variables > Actions
+2. Add two repository secrets:
+   - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token
+   - `TELEGRAM_CHANNEL_ID`: Your Telegram channel ID
+
+### Workflow Triggers
+- **Scheduled**: Runs automatically every 2 hours
+- **Manual**: Can be triggered from Actions tab
+
+### How to Manually Trigger
+1. Go to repository "Actions" tab
+2. Select "Telegram Proxy Update" workflow
+3. Click "Run workflow"
+4. Choose branch and run
+
+### Monitoring
+- View workflow runs in the "Actions" tab
+- Check detailed logs for any issues
+
+### Customization
+Edit `.github/workflows/proxy_update.yml` to:
+- Change schedule frequency
+- Modify workflow behavior 

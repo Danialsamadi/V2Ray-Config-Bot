@@ -36,14 +36,29 @@ jobs:
       run: |
         echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> .env
         echo "TELEGRAM_CHANNEL_ID=$TELEGRAM_CHANNEL_ID" >> .env
+        echo "LOG_LEVEL=INFO" >> .env
     
     - name: Run Proxy Update
-      run: python run_bot.py
-      
-    - name: Log Workflow Completion
-      if: success()
-      run: echo "Proxy update workflow completed successfully"
+      run: |
+        echo "Starting proxy update workflow..."
+        python run_bot.py
+      continue-on-error: true
     
-    - name: Log Workflow Failure
+    - name: Check Workflow Status
+      if: steps.run_bot.outcome != 'success'
+      run: |
+        echo "::error::Proxy update workflow failed"
+        exit 1
+    
+    - name: Log Workflow Completion
+      run: |
+        echo "Proxy update workflow completed"
+        
+    - name: Slack Notification
       if: failure()
-      run: echo "Proxy update workflow failed" 
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: Proxy update workflow failed
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}  # Optional: for Slack notifications 
