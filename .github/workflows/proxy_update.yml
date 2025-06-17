@@ -29,6 +29,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Print Python version and environment
+      run: |
+        python --version
+        pip list
+        pwd
+        ls -la
+    
     - name: Configure environment
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -36,11 +43,12 @@ jobs:
       run: |
         echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> .env
         echo "TELEGRAM_CHANNEL_ID=$TELEGRAM_CHANNEL_ID" >> .env
-        echo "LOG_LEVEL=INFO" >> .env
+        echo "LOG_LEVEL=DEBUG" >> .env
     
     - name: Run Proxy Update
+      id: run_bot
       run: |
-        echo "Starting proxy update workflow..."
+        set -x
         python run_bot.py
       continue-on-error: true
     
