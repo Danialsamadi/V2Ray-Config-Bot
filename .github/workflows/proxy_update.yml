@@ -29,11 +29,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Print Python version and environment
+    - name: Print Environment Details
       run: |
+        echo "Python version:"
         python --version
+        echo "\nPip packages:"
         pip list
+        echo "\nCurrent directory:"
         pwd
+        echo "\nRepository contents:"
         ls -la
     
     - name: Configure environment
@@ -44,6 +48,8 @@ jobs:
         echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> .env
         echo "TELEGRAM_CHANNEL_ID=$TELEGRAM_CHANNEL_ID" >> .env
         echo "LOG_LEVEL=DEBUG" >> .env
+        echo "REQUEST_TIMEOUT=60" >> .env
+        echo "MAX_RETRIES=3" >> .env
     
     - name: Run Proxy Update
       id: run_bot
@@ -56,17 +62,10 @@ jobs:
       if: steps.run_bot.outcome != 'success'
       run: |
         echo "::error::Proxy update workflow failed"
+        cat bot_run.log
         exit 1
     
     - name: Log Workflow Completion
       run: |
         echo "Proxy update workflow completed"
-        
-    - name: Slack Notification
-      if: failure()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        text: Proxy update workflow failed
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}  # Optional: for Slack notifications 
+        cat bot_run.log

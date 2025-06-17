@@ -35,13 +35,16 @@ async def send_proxies_to_channel():
         return False
     
     try:
+        # Increase timeout for requests
+        requests.adapters.DEFAULT_TIMEOUT = REQUEST_TIMEOUT
+        
         bot = Bot(token=BOT_TOKEN)
         
         # Get current datetime in Iran timezone
         current_datetime = datetime.now(tz=timezone(timedelta(hours=3, minutes=30)))
         datetime_str = current_datetime.strftime("%a, %d %b %Y %X %Z")
         
-        # Fetch latest proxies from online source
+        # Fetch latest proxies from online source with timeout
         try:
             response = requests.get(PROXY_SOURCE_URL, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()  # Raise an exception for bad status codes
@@ -88,18 +91,26 @@ async def send_proxies_to_channel():
         first_message += "• [IPv6 Proxies](https://raw.githubusercontent.com/soroushmirzaei/telegram-proxies-collector/main/layers/ipv6)\n"
         first_message += "• [Web Interface](https://soroushmirzaei.github.io/telegram-proxies-collector)\n"
         
-        # Send the first message
-        try:
-            await bot.send_message(
-                chat_id=CHANNEL_ID,
-                text=first_message,
-                parse_mode='Markdown',
-                disable_web_page_preview=True
-            )
-            await asyncio.sleep(1)  # Add a small delay
-        except Exception as e:
-            logger.error(f"Failed to send first message: {e}")
-            return False
+        # Send the first message with retry mechanism
+        max_retries = MAX_RETRIES
+        for attempt in range(max_retries):
+            try:
+                await bot.send_message(
+                    chat_id=CHANNEL_ID,
+                    text=first_message,
+                    parse_mode='Markdown',
+                    disable_web_page_preview=True,
+                    read_timeout=REQUEST_TIMEOUT,
+                    write_timeout=REQUEST_TIMEOUT,
+                    connect_timeout=REQUEST_TIMEOUT
+                )
+                break
+            except Exception as e:
+                logger.warning(f"Attempt {attempt + 1} failed to send first message: {e}")
+                if attempt == max_retries - 1:
+                    logger.error("Failed to send first message after all retries")
+                    return False
+                await asyncio.sleep(2)  # Wait before retrying
         
         # Prepare and send proxy links in batches
         batch_size = 10  # Number of proxies per message
@@ -118,37 +129,28 @@ async def send_proxies_to_channel():
                 current_message += f"[Proxy {i}]({link})\n"
                 current_message += f"---------------\n"
             
-            # Send batch message
-            await bot.send_message(
-                chat_id=CHANNEL_ID,
-                text=current_message,
-                parse_mode='Markdown',
-                disable_web_page_preview=True
-            )
-        
-        # Send comprehensive subscription links in a final message
-        subscription_message = "*Comprehensive Proxy Resources:*\n\n"
-        
-        subscription_message += "*Subscription Links:*\n"
-        subscription_message += "• [All Proxies](https://raw.githubusercontent.com/soroushmirzaei/telegram-proxies-collector/main/proxies)\n"
-        subscription_message += "• [IPv4 Proxies](https://raw.githubusercontent.com/soroushmirzaei/telegram-proxies-collector/main/layers/ipv4)\n"
-        subscription_message += "• [IPv6 Proxies](https://raw.githubusercontent.com/soroushmirzaei/telegram-proxies-collector/main/layers/ipv6)\n"
-        
-        subscription_message += "\n*Additional Resources:*\n"
-        subscription_message += "• [Web Interface](https://soroushmirzaei.github.io/telegram-proxies-collector)\n"
-        subscription_message += "• [GitHub Repository](https://github.com/soroushmirzaei/telegram-proxies-collector)\n"
-        
-        subscription_message += "\n*How to Use:*\n"
-        subscription_message += "1. Copy proxy links\n"
-        subscription_message += "2. Import into your preferred V2Ray client\n"
-        subscription_message += "3. Connect and browse freely\n"
-        
-        await bot.send_message(
-            chat_id=CHANNEL_ID,
-            text=subscription_message,
-            parse_mode='Markdown',
-            disable_web_page_preview=True
-        )
+            # Send batch message with retry mechanism
+            for attempt in range(max_retries):
+                try:
+                    await bot.send_message(
+                        chat_id=CHANNEL_ID,
+                        text=current_message,
+                        parse_mode='Markdown',
+                        disable_web_page_preview=True,
+                        read_timeout=REQUEST_TIMEOUT,
+                        write_timeout=REQUEST_TIMEOUT,
+                        connect_timeout=REQUEST_TIMEOUT
+                    )
+                    break
+                except Exception as e:
+                    logger.warning(f"Attempt {attempt + 1} failed to send batch {batch + 1}: {e}")
+                    if attempt == max_retries - 1:
+                        logger.error(f"Failed to send batch {batch + 1} after all retries")
+                        return False
+                    await asyncio.sleep(2)  # Wait before retrying
+            
+            # Add a small delay between batches to prevent rate limiting
+            await asyncio.sleep(1)
         
         logger.info(f"Successfully sent proxies to channel {CHANNEL_ID}")
         return True
