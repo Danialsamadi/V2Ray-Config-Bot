@@ -1,5 +1,4 @@
 name: Telegram Proxy Update
-
 on:
   schedule:
     # Run every 4 hours
@@ -14,60 +13,96 @@ on:
 jobs:
   update-proxies:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write  # Required for pushing changes
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Print Environment Details
-      run: |
-        echo "Python version:"
-        python --version
-        echo "\nPip packages:"
-        pip list
-        echo "\nCurrent directory:"
-        pwd
-        echo "\nRepository contents:"
-        ls -la
-    
-    - name: Configure environment
-      env:
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-        PROXY_SOURCE_URL: ${{ secrets.PROXY_SOURCE_URL }}
-      run: |
-        echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> .env
-        echo "TELEGRAM_CHANNEL_ID=$TELEGRAM_CHANNEL_ID" >> .env
-        echo "LOG_LEVEL=DEBUG" >> .env
-        echo "REQUEST_TIMEOUT=60" >> .env
-        echo "MAX_RETRIES=3" >> .env
-        echo "PROXY_SOURCE_URL=$PROXY_SOURCE_URL" >> .env
-    
-    - name: Run Proxy Update
-      id: run_bot
-      run: |
-        set -x
-        python run_bot.py
-      continue-on-error: true
-    
-    - name: Check Workflow Status
-      if: steps.run_bot.outcome != 'success'
-      run: |
-        echo "::error::Proxy update workflow failed"
-        cat bot_run.log
-        exit 1
-    
-    - name: Log Workflow Completion
-      run: |
-        echo "Proxy update workflow completed"
-        cat bot_run.log
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Full history for better git operations
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Print Environment Details
+        run: |
+          echo "Python version:"
+          python --version
+          echo -e "\nPip packages:"
+          pip list
+          echo -e "\nCurrent directory:"
+          pwd
+          echo -e "\nRepository contents:"
+          ls -la
+      
+      - name: Configure environment
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          PROXY_SOURCE_URL: ${{ secrets.PROXY_SOURCE_URL }}
+        run: |
+          echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> .env
+          echo "TELEGRAM_CHANNEL_ID=$TELEGRAM_CHANNEL_ID" >> .env
+          echo "LOG_LEVEL=DEBUG" >> .env
+          echo "REQUEST_TIMEOUT=60" >> .env
+          echo "MAX_RETRIES=3" >> .env
+          echo "PROXY_SOURCE_URL=$PROXY_SOURCE_URL" >> .env
+      
+      - name: Run Proxy Update
+        id: run_bot
+        run: |
+          set -x
+          python run_bot.py 2>&1 | tee bot_run.log
+        continue-on-error: true
+      
+      - name: Check for generated files
+        id: check_files
+        run: |
+          if [ -f "proxies.txt" ]; then
+            echo "proxies_file_exists=true" >> $GITHUB_OUTPUT
+            echo "Proxies file created/updated"
+            echo "Total proxies: $(wc -l < proxies.txt)"
+            echo "File size: $(du -h proxies.txt | cut -f1)"
+          else
+            echo "proxies_file_exists=false" >> $GITHUB_OUTPUT
+            echo "No proxies file found"
+          fi
+      
+      - name: Commit and push files
+        if: steps.check_files.outputs.proxies_file_exists == 'true'
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: "Danialsamadi"
+          author_email: "danisamadi11@github.com"
+          message: "Fresh Proxies"
+          add: "."
+      
+      - name: Check Workflow Status
+        if: steps.run_bot.outcome != 'success'
+        run: |
+          echo "::error::Proxy update workflow failed"
+          if [ -f "bot_run.log" ]; then
+            echo "Bot run log:"
+            cat bot_run.log
+          fi
+          exit 1
+      
+      - name: Log Workflow Completion
+        run: |
+          echo "Proxy update workflow completed successfully"
+          if [ -f "bot_run.log" ]; then
+            echo "Bot run log:"
+            cat bot_run.log
+          fi
+          
+          if [ "${{ steps.check_files.outputs.proxies_file_exists }}" = "true" ]; then
+            echo "Files committed and pushed to repository"
+          fi

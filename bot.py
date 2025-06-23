@@ -50,6 +50,18 @@ def remove_duplicate_proxies(proxies):
             unique_proxies.append(proxy)
     return unique_proxies
 
+def save_proxies_to_file(proxy_links, filename='proxies.txt'):
+    """Save proxy links to a text file."""
+    try:
+        with open(filename, 'w', encoding='utf-8') as file:
+            for proxy in proxy_links:
+                file.write(proxy + '\n')
+        logger.info(f"Successfully saved {len(proxy_links)} proxies to {filename}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save proxies to {filename}: {e}")
+        return False
+
 async def send_proxies_to_channel():
     """Send the latest proxies to the specified Telegram channel."""
     if not BOT_TOKEN or not CHANNEL_ID:
@@ -106,6 +118,12 @@ async def send_proxies_to_channel():
         
         # Update proxy_links with unique links
         proxy_links = unique_proxy_links
+        
+        # Try to save all proxies to file before processing
+        try:
+            save_proxies_to_file(proxy_links, 'proxies.txt')
+        except Exception as e:
+            logger.error(f"Error saving proxies to file: {e}")
         
         # Calculate half of the proxies
         half_proxies_count = len(proxy_links) // 2
@@ -208,4 +226,4 @@ async def send_proxies_to_channel():
         return False
 
 if __name__ == "__main__":
-    asyncio.run(send_proxies_to_channel()) 
+    asyncio.run(send_proxies_to_channel())
