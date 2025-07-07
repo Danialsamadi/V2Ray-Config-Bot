@@ -4,18 +4,20 @@
 This project automatically collects and distributes Telegram proxy links via a Telegram channel.
 
 ## Features
-- Fetches latest proxy links from online sources
+- Fetches latest proxy links from online sources (defined in sources.json)
 - Removes duplicate proxies
 - Sends proxies to a Telegram channel
 - Automated updates via GitHub Actions
+- Modular, maintainable codebase
 
 ## GitHub Actions Workflow
 
 ### Scheduled Updates
-The workflow runs automatically every 2 hours to:
+The workflow runs automatically every 4 hours to:
 - Fetch the latest proxy links
 - Remove duplicates
 - Send updates to the Telegram channel
+- Commit the updated `proxies.txt` to the repository
 
 ### Manual Trigger
 You can also manually trigger the workflow from the GitHub Actions tab.
@@ -35,8 +37,23 @@ Set the following secrets in your GitHub repository settings:
 ## Local Development
 1. Clone the repository
 2. Install dependencies: `pip install -r requirements.txt`
-3. Create a `.env` file with your Telegram credentials
-4. Run the bot: `python run_bot.py`
+3. Create a `.env` file with your Telegram credentials (see below)
+4. Create or edit `sources.json` to define your proxy sources (see example below)
+5. Run the bot: `python main.py`
+
+### sources.json Example
+```
+{
+  "json_urls": [
+    "https://freeproxydb.com/api/proxy/search?country=&protocol=&anonymity=&speed=0,60&https=0&page_index=1&page_size=100",
+    "https://mtpro.xyz/api/?type=mtproto"
+  ],
+  "telegram_channels": [
+    "https://t.me/s/iporoto",
+    "https://t.me/s/HiProxy"
+  ]
+}
+```
 
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request.
@@ -61,8 +78,6 @@ Contributions are welcome! Please open an issue or submit a pull request.
 #### Optional Configuration Variables
 - `LOG_LEVEL`: Logging verbosity (default: INFO)
   - Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
-- `MAX_PROXIES`: Maximum number of proxies to collect (default: 100)
-- `PROXY_SOURCE_URL`: Custom proxy source URL
 - `REQUEST_TIMEOUT`: HTTP request timeout in seconds (default: 30)
 - `MAX_RETRIES`: Number of retry attempts for failed requests (default: 3)
 
@@ -94,7 +109,7 @@ For GitHub Actions, set the following secrets in your repository settings:
    - `TELEGRAM_CHANNEL_ID`: Your Telegram channel ID
 
 ### Workflow Triggers
-- **Scheduled**: Runs automatically every 2 hours
+- **Scheduled**: Runs automatically every 4 hours
 - **Manual**: Can be triggered from Actions tab
 
 ### How to Manually Trigger
@@ -105,9 +120,11 @@ For GitHub Actions, set the following secrets in your repository settings:
 
 ### Monitoring
 - View workflow runs in the "Actions" tab
-- Check detailed logs for any issues
+- Check detailed logs for any issues (see `bot.log` and workflow logs)
 
 ### Customization
-Edit `.github/workflows/proxy_update.yml` to:
-- Change schedule frequency
-- Modify workflow behavior 
+- Edit `sources.json` to change proxy sources
+- Edit `.github/workflows/proxy_update.yml` to change schedule frequency or workflow behavior
+
+## Output
+- The bot generates a single file: `proxies.txt` (one proxy per line, no header) 

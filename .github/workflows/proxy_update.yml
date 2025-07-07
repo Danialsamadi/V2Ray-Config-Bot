@@ -47,20 +47,18 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          PROXY_SOURCE_URL: ${{ secrets.PROXY_SOURCE_URL }}
         run: |
           echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> .env
           echo "TELEGRAM_CHANNEL_ID=$TELEGRAM_CHANNEL_ID" >> .env
           echo "LOG_LEVEL=DEBUG" >> .env
           echo "REQUEST_TIMEOUT=60" >> .env
           echo "MAX_RETRIES=3" >> .env
-          echo "PROXY_SOURCE_URL=$PROXY_SOURCE_URL" >> .env
       
       - name: Run Proxy Update
         id: run_bot
         run: |
           set -x
-          python run_bot.py 2>&1 | tee bot_run.log
+          python main.py 2>&1 | tee bot_run.log
         continue-on-error: true
       
       - name: Check for generated files

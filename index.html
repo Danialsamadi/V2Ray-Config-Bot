@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Proxy List Web Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: #4f8cff;
+            color: #fff;
+            padding: 32px 0 18px 0;
+            text-align: center;
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
+            box-shadow: 0 4px 24px #0002;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+        }
+        .header .meta {
+            color: #e0e7ff;
+            font-size: 1.1rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto 0 auto;
+            background: #fff;
+            padding: 24px 10px 18px 10px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px #0001;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #4f8cff;
+            color: #fff;
+            font-weight: 600;
+            padding: 14px 8px;
+            border-bottom: 2px solid #e3e7ed;
+            z-index: 2;
+            font-size: 1.05rem;
+        }
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 1.05rem;
+        }
+        tr:nth-child(even) {
+            background: #f0f6ff;
+        }
+        tr:nth-child(odd) {
+            background: #e0f7fa;
+        }
+        tr:hover {
+            background: #ffe4e6;
+        }
+        .proxy-link {
+            font-family: monospace;
+            word-break: break-all;
+            color: #2563eb;
+        }
+        .copy-btn {
+            background: #4f8cff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 18px;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            color: #fff;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s;
+        }
+        .copy-btn:hover {
+            background: #6ee7b7;
+            color: #222;
+        }
+        @media (max-width: 800px) {
+            .container { max-width: 99vw; padding: 8px; }
+            .header { padding: 24px 0 12px 0; font-size: 1.2rem; }
+        }
+        @media (max-width: 600px) {
+            .container { padding: 2vw; border-radius: 10px; }
+            .header { border-radius: 0 0 18px 18px; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr { margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+            td { border: none; padding: 10px 0; font-size: 1.1rem; }
+            td:before { content: attr(data-label); font-weight: bold; display: inline-block; width: 90px; color: #4f8cff; }
+            .copy-btn { width: 100%; margin: 8px 0 0 0; padding: 12px 0; font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Proxy List</h1>
+        <div class="meta">
+            <span id="generated"></span> &nbsp;|&nbsp; <span id="total"></span>
+        </div>
+    </div>
+    <div class="container">
+        <table>
+            <thead><tr><th>#</th><th>Proxy</th><th>Action</th></tr></thead>
+            <tbody id="proxy-table">
+                <!-- Proxies will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        let allProxies = [];
+        function renderTable(proxies) {
+            const tbody = document.getElementById('proxy-table');
+            tbody.innerHTML = '';
+            proxies.forEach((proxy, idx) => {
+                const tr = document.createElement('tr');
+                const tdIdx = document.createElement('td');
+                tdIdx.textContent = idx + 1;
+                tdIdx.setAttribute('data-label', '#');
+                const tdProxy = document.createElement('td');
+                tdProxy.className = 'proxy-link';
+                tdProxy.setAttribute('data-label', 'Proxy');
+                if (/^(tg|http|https|socks5):\/\//.test(proxy)) {
+                    const a = document.createElement('a');
+                    a.href = proxy;
+                    a.textContent = proxy;
+                    a.target = '_blank';
+                    tdProxy.appendChild(a);
+                } else {
+                    tdProxy.textContent = proxy;
+                }
+                const tdAction = document.createElement('td');
+                tdAction.setAttribute('data-label', 'Action');
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn';
+                btn.textContent = 'Copy';
+                btn.onclick = () => {
+                    navigator.clipboard.writeText(proxy);
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+                };
+                tdAction.appendChild(btn);
+                tr.appendChild(tdIdx);
+                tr.appendChild(tdProxy);
+                tr.appendChild(tdAction);
+                tbody.appendChild(tr);
+            });
+        }
+        fetch('proxies.txt')
+            .then(response => response.text())
+            .then(text => {
+                const lines = text.split('\n').filter(line => line && !line.startsWith('#'));
+                allProxies = lines;
+                document.getElementById('total').textContent = 'Total Proxies: ' + lines.length;
+                const now = new Date();
+                document.getElementById('generated').textContent = 'Generated: ' + now.toLocaleString();
+                renderTable(lines);
+            })
+            .catch(err => {
+                document.getElementById('proxy-table').innerHTML = '<tr><td colspan="3">Failed to load proxies.txt</td></tr>';
+            });
+    </script>
+</body>
+</html>
