@@ -1,8 +1,8 @@
 name: Telegram Proxy Update
 on:
   schedule:
-    # Run every 4 hours
-    - cron: '0 */4 * * *'
+    # Run every 8 hours
+    - cron: '0 */8 * * *'
   workflow_dispatch:
     inputs:
       reason:
