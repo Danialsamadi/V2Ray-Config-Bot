@@ -5,8 +5,10 @@ This project automatically collects and distributes Telegram proxy links via a T
 
 ## Features
 - Fetches latest proxy links from online sources (defined in sources.json)
+- Prioritizes proxies from Telegram channels over JSON sources
 - Removes duplicate proxies
-- Sends proxies to a Telegram channel
+- Sends up to the first 1000 proxies to a Telegram channel (in batches)
+- Persian (Jalali) calendar date in the Farsi summary message
 - Automated updates via GitHub Actions
 - Modular, maintainable codebase
 
@@ -37,6 +39,7 @@ Set the following secrets in your GitHub repository settings:
 ## Local Development
 1. Clone the repository
 2. Install dependencies: `pip install -r requirements.txt`
+   - Make sure you have [jdatetime](https://pypi.org/project/jdatetime/) installed for Persian calendar support.
 3. Create a `.env` file with your Telegram credentials (see below)
 4. Create or edit `sources.json` to define your proxy sources (see example below)
 5. Run the bot: `python main.py`
@@ -45,12 +48,23 @@ Set the following secrets in your GitHub repository settings:
 ```
 {
   "json_urls": [
-    "https://freeproxydb.com/api/proxy/search?country=&protocol=&anonymity=&speed=0,60&https=0&page_index=1&page_size=100",
-    "https://mtpro.xyz/api/?type=mtproto"
+    "https://raw.githubusercontent.com/hookzof/socks5_list/master/tg/mtproto.json"
   ],
   "telegram_channels": [
-    "https://t.me/s/iporoto",
-    "https://t.me/s/HiProxy"
+    "https://t.me/s/HiProxy",
+    "https://t.me/s/iRoProxy",
+    "https://t.me/s/MProxy_ir",
+    "https://t.me/s/ProxyHagh",
+    "https://t.me/s/PyroProxy",
+    "https://t.me/s/darkproxy",
+    "https://t.me/s/proxyinwar",
+    "https://t.me/s/MelliProxy",
+    "https://t.me/s/Proxy_FreeL",
+    "https://t.me/s/MTelProto",
+    "https://t.me/s/Forall_Proxy",
+    "https://t.me/s/WhAlE_ChAnEl",
+    "https://t.me/s/v2raychidari",
+    "https://t.me/s/BestSpeedProxy"
   ]
 }
 ```
@@ -127,4 +141,6 @@ For GitHub Actions, set the following secrets in your repository settings:
 - Edit `.github/workflows/proxy_update.yml` to change schedule frequency or workflow behavior
 
 ## Output
-- The bot generates a single file: `proxies.txt` (one proxy per line, no header) 
+- The bot generates a single file: `proxies.txt` (one proxy per line, no header)
+- Only the first 1000 proxies (prioritizing Telegram channels) are sent to the Telegram channel in each run
+- The Farsi summary message uses the Persian (Jalali) calendar for the date 

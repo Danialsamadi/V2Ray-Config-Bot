@@ -7,6 +7,7 @@ import random
 from telegram import Bot
 import asyncio
 from dotenv import load_dotenv
+import jdatetime
 
 load_dotenv()
 
@@ -31,12 +32,26 @@ async def send_proxies_to_channel(proxies):
     if not BOT_TOKEN or not CHANNEL_ID:
         logger.error("Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHANNEL_ID.")
         return False
+    # Randomly sample up to 1000 proxies
+    if len(proxies) > 1000:
+        proxies = random.sample(proxies, 1000)
     bot = Bot(token=BOT_TOKEN)
     tehran_tz = pytz.timezone('Asia/Tehran')
     current_datetime = datetime.now(tehran_tz)
-    datetime_str = current_datetime.strftime("%a, %d %b %Y %H:%M:%S %Z%z")
-    first_message = f"🔄 *Latest Proxies Update: {datetime_str}*\n\n"
-    first_message += f"*Total Proxies Collected:* {len(proxies)}\n\n"
+    datetime_str = current_datetime.strftime("%a, %d %b %Y %H:%M:%S")
+    # Add Jalali (Persian) date string
+    jalali_datetime = jdatetime.datetime.fromgregorian(datetime=current_datetime)
+    jalali_str = jalali_datetime.strftime("%A، %d %B %Y %H:%M:%S")
+    # Bilingual summary message
+    first_message = (
+        f"🔄 *Latest Proxies Update: {datetime_str}*\n"
+        f"*Total Proxies Collected:* {len(proxies)}\n"
+        f"⚠️ o *Depending on the type and quality of your internet connection, some proxies may not be compatible with your Telegram version. Therefore, test other proxies and use them accordingly.*\n\n\n"
+        f"🔄 *آخرین بروزرسانی پروکسی‌ها: {jalali_str}*\n"
+        f"*تعداد کل پروکسی‌های جمع آوری شده:* {len(proxies)}\n"
+        f"⚠️ *بسته به نوع و کیفیت اتصال اینترنت شما، ممکن است برخی پروکسی‌ها با نسخه تلگرام شما سازگار نباشند. بنابراین، پروکسی‌های دیگر را نیز آزمایش کنید و از آن‌ها استفاده نمایید.*\n\n"
+        f"@proxyroohejangali"
+    )
     summary_message = None
     for attempt in range(MAX_RETRIES):
         try:

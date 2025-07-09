@@ -1,6 +1,6 @@
 {
   "json_urls": [
-    "https://mtpro.xyz/api/?type=mtproto"
+    "https://raw.githubusercontent.com/hookzof/socks5_list/master/tg/mtproto.json"
   ],
   "telegram_channels": [
     "https://t.me/s/HiProxy",
@@ -11,6 +11,11 @@
     "https://t.me/s/darkproxy",
     "https://t.me/s/proxyinwar",
     "https://t.me/s/MelliProxy",
-    "https://t.me/s/Proxy_FreeL"
+    "https://t.me/s/Proxy_FreeL",
+    "https://t.me/s/MTelProto",
+    "https://t.me/s/Forall_Proxy",
+    "https://t.me/s/WhAlE_ChAnEl",
+    "https://t.me/s/v2raychidari",
+    "https://t.me/s/BestSpeedProxy"
   ]
 } 
