@@ -44,12 +44,14 @@ async def send_proxies_to_channel(proxies):
     jalali_str = jalali_datetime.strftime("%A، %d %B %Y %H:%M:%S")
     # Bilingual summary message
     first_message = (
-        f"🔄 *Latest Proxies Update: {datetime_str}*\n"
-        f"*Total Proxies Collected:* {len(proxies)}\n"
-        f"⚠️ o *Depending on the type and quality of your internet connection, some proxies may not be compatible with your Telegram version. Therefore, test other proxies and use them accordingly.*\n\n\n"
-        f"🔄 *آخرین بروزرسانی پروکسی‌ها: {jalali_str}*\n"
-        f"*تعداد کل پروکسی‌های جمع آوری شده:* {len(proxies)}\n"
-        f"⚠️ *بسته به نوع و کیفیت اتصال اینترنت شما، ممکن است برخی پروکسی‌ها با نسخه تلگرام شما سازگار نباشند. بنابراین، پروکسی‌های دیگر را نیز آزمایش کنید و از آن‌ها استفاده نمایید.*\n\n"
+        f"<b>🔄 آخرین بروزرسانی پروکسی‌ها:</b> {jalali_str}\n\n"
+        f"<b>📄 تعداد کل پروکسی‌های جمع آوری شده:</b> {len(proxies)}\n\n"
+        f"<blockquote>⚠️ بسته به ویژگی‌ها و کیفیت اتصال اینترنت و نسخه کلاینت تلگرام شما، برخی سرورهای پروکسی ممکن است عملکرد مطلوبی نداشته باشند. بنابراین، پیشنهاد می‌شود پروکسی‌های جایگزین را آزمایش کرده و از گزینه‌هایی استفاده کنید که سازگاری و کارایی بهتری ارائه می‌دهند. ⚠️</blockquote>\n\n"
+        f"<a href='https://telegra.ph/Terms-and-Conditions-07-08-3'>شرایط و قوانین</a> | <a href='https://telegra.ph/FAQ---Frequently-Asked-Question-07-09'>سوالات متداول</a>\n\n"
+        f"<b>🔄 Latest Proxies Update:</b> {datetime_str}\n\n"
+        f"<b>📄 Total Proxies Collected:</b> {len(proxies)}\n\n"
+        f"<blockquote>⚠️ Depending on the characteristics and quality of your internet connection and the version of your Telegram client, some proxy servers may not perform optimally. Therefore, it is recommended to test alternative proxies and use those that offer better compatibility and efficiency. ⚠️</blockquote>\n\n"
+        f"<a href='https://telegra.ph/Terms-and-Conditions-07-08-3'>Terms and Conditions</a> | <a href='https://telegra.ph/FAQ---Frequently-Asked-Question-07-09'>FAQ - Frequently Asked Questions</a>\n\n"
         f"@proxyroohejangali"
     )
     summary_message = None
@@ -58,7 +60,7 @@ async def send_proxies_to_channel(proxies):
             summary_message = await bot.send_message(
                 chat_id=CHANNEL_ID,
                 text=first_message,
-                parse_mode='Markdown',
+                parse_mode='HTML',
                 disable_web_page_preview=True,
                 read_timeout=REQUEST_TIMEOUT,
                 write_timeout=REQUEST_TIMEOUT,
